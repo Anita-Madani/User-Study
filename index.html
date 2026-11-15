@@ -89,11 +89,11 @@ button.leave { color: var(--muted); background: var(--panel); pointer-events: au
 .sc-box { background: var(--chip); border-left: 4px solid var(--accent); border-radius: 6px; padding: 5px 12px; font-size: 1rem; }
 .sc-box.ctl { border-left-color: var(--warn); }
 .sc-label { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.cols { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .vrow { position: sticky; top: 0; z-index: 5; background: var(--panel); padding: 6px 0; }
 .vcell { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
 .vcell.orig { border: 2px solid var(--accent); }
-.vcell video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+.vcell video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; cursor: pointer; }
 .vhead { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 2px 8px; }
 .tools { gap: 8px; margin: 4px 0; }
 .qgrid { margin-top: 8px; row-gap: 0; }
@@ -106,6 +106,8 @@ button.leave { color: var(--muted); background: var(--panel); pointer-events: au
 .scale { display: flex; align-items: center; gap: 6px; }
 .scale input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
 .scale .end { font-size: .8rem; color: var(--muted); font-weight: 600; }
+.scale.yn { justify-content: center; gap: 14px; }
+.scale.yn label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: .95rem; }
 .nextrow { align-items: center; margin-top: 10px; gap: 12px; }
 .instr p { margin: 0; max-width: none; }
 .instr details { margin-top: 8px; }
@@ -225,7 +227,8 @@ function makePlan(pid) {
   return { list: "random", practice: [], screens };
 }
 
-// ---------- the four questions, each clip rated 0-5 (0 = not at all, 5 = completely) ----------
+// ---------- the four questions, each clip answered Yes (1) or No (0) (Nov 15; before: 0-5, kept in the saved rows) ----------
+const YESNO_FROM_0_5 = v => (v == null ? null : (v >= 3 ? 1 : 0));   // an old 0-5 answer shown as Yes (3-5) / No (0-2)
 const QS = [
   ["scenario", "Is this scenario happening?"],
   ["control", "Is this control happening?"],
@@ -250,14 +253,14 @@ const RUBRIC = [
   { q: "Does it look like a real scenario?", what: "Looks and moves like real traffic footage.",
     s: ["Clearly fake", "Mostly fake", "Several fake parts", "Some parts look or move wrong", "Small flaws only", "Looks fully real"] },
 ];
-const SHORT = [                               // one line per question, with its two ends of the scale
-  ["Is this scenario happening?", "Does the clip show the scenario at the top?", "0 = not at all, 5 = fully"],
-  ["Is this control happening?", "Does it show the specific version under Control?", "0 = no, 5 = exactly"],
-  ["Is it safety-critical?", "Could the car hit someone if it kept going?", "0 = nobody near, 5 = it would hit someone"],
-  ["Does it look like a real scenario?", "Could it be a real recording?", "0 = clearly fake, 5 = fully real"],
+const SHORT = [                               // one line per question
+  ["Is this scenario happening?", "Does the clip show the scenario at the top?"],
+  ["Is this control happening?", "Does it show the specific version under Control?"],
+  ["Is it safety-critical?", "Could the car hit someone if it kept going?"],
+  ["Does it look like a real scenario?", "Could it be a real recording?"],
 ];
 function rubricGrid(cls) {                    // the four questions, one line each
-  return h("div", { class: "short " + cls }, SHORT.map(([q, d, sc]) => h("div", {}, h("b", {}, q + " "), d + " ", h("span", { class: "note" }, "(" + sc + ")"))));
+  return h("div", { class: "short " + cls }, SHORT.map(([q, d]) => h("div", {}, h("b", {}, q + " "), d)));
 }
 function pageRange() {
   const per = (STUDY.settings || {}).per_scene || 5;
@@ -403,6 +406,11 @@ async function fetchProgress(pid) {           // this participant's earlier rows
     return Array.isArray(rows) ? rows : [];
   } catch (e) { return []; }
 }
+let _inStudy = null;
+function inStudy(c) {                          // is this clip still shown in the study?
+  if (!_inStudy) { _inStudy = new Set(); for (const P of Object.values(STUDY.pairs)) for (const v of Object.values(P.variants)) v.clips.forEach(x => _inStudy.add(x)); }
+  return _inStudy.has(c);
+}
 function stateFromRows(pid, name, rows) {     // rebuild the saved state from the rows already stored for this name
   const all = rows.map(r => r.payload || {});
   let cut = -1;                                // "leave and delete my answers": nothing before it is used, so only rows after it count
@@ -426,7 +434,10 @@ function stateFromRows(pid, name, rows) {     // rebuild the saved state from th
   for (const m of P) if (m.kind === "screen" && m.record && Number.isInteger(m.record.page)) byPage[m.record.page] = m.record;
   let i = 0; while (byPage[i] && i < st.plan.screens.length) i++;
   for (let j = 0; j < i; j++) {                // keep the clip order they rated with
-    if (byPage[j].positions) st.plan.screens[j].clips = Object.keys(byPage[j].positions).sort().map(L => byPage[j].positions[L]);
+    if (byPage[j].positions) {                 // (Nov 15) minus clips no longer in the study; their scores stay in the saved rows
+      const kept = Object.keys(byPage[j].positions).sort().map(L => byPage[j].positions[L]).filter(inStudy);
+      if (kept.length) st.plan.screens[j].clips = kept;
+    }
   }
   st.answers = [...Array(i).keys()].map(j => byPage[j]);
   st.practice = prac ? prac.record : null;
@@ -473,7 +484,7 @@ function pageLogin() {
     h("h1", {}, "Driving Video Editing Evaluation Study"),
     h("h2", {}, "Study overview"),
     h("p", {}, "This study evaluates AI methods that edit driving videos recorded from a car (the camera car). On each page you watch the original video " +
-      "and four edited videos, then rate each edited video from 0 (not at all) to 5 (completely) on four questions."),
+      "and three edited videos, then answer four Yes / No questions about each edited video."),
     h("div", { class: "wcols" },
       h("div", {},
         h("h3", {}, "What each page shows"),
@@ -481,7 +492,7 @@ function pageLogin() {
           "and where, compared with the camera car). Example: “A child unexpectedly moves into the road close in front of the camera car.”"),
         item("Control", "The specific way the scenario should play out on this page. The same scenario comes in different versions: e.g. the child " +
           "runs out from behind a parked school bus on one page, and from behind parked cars on another."),
-        item("Videos", "The original recording, for comparison, and four edited videos, Clip A to Clip D. You rate only the edited clips.")),
+        item("Videos", "The original recording, for comparison, and three edited videos, Clip A to Clip C. They play and repeat on their own. You rate only the edited clips.")),
       h("div", {},
         h("h3", {}, "Evaluation criteria"),
         item("1. Scenario", "Is this scenario happening? Does the clip show what the edit was meant to do? For example, if it says " +
@@ -502,15 +513,15 @@ function pageIntro() {
   const n = S.plan.screens.length;
   app.append(h("div", { class: "card" },
     h("h2", {}, "How it works"),
-    h("p", {}, `You will see ${n} pages. On each page, rate every clip A–D from 0 (not at all) to 5 (completely) on four questions.`),
+    h("p", {}, `You will see ${n} pages. On each page, answer Yes or No for every clip A–C on four questions.`),
     h("ul", { class: "tips" },
-      h("li", {}, h("b", {}, "Original recording: "), "the unedited video, for comparison. Clips A–D are edited versions of it, in a random order. Only the clips are rated."),
+      h("li", {}, h("b", {}, "Original recording: "), "the unedited video, for comparison. Clips A–C are edited versions of it, in a random order. Only the clips are rated."),
       h("li", {}, h("b", {}, "Is this scenario happening? "), "Does the clip show the scenario written at the top (the people or objects it names, doing what it says)?"),
       h("li", {}, h("b", {}, "Is this control happening? "), "Does the clip show the specific version written under Control (for example where the person comes from, or what they do)?"),
       h("li", {}, h("b", {}, "Is it safety-critical? "), "Is someone close enough to the camera car's path that the car could hit them if it did not slow down or steer?"),
       h("li", {}, h("b", {}, "Does it look like a real scenario? "), "Could this clip be real footage from a car's camera, with people and vehicles that look real and move the way they would in real traffic (speed, direction, timing, body movement)?"),
       h("li", {}, "Rate what you actually see. The camera car may drive a little differently from the original; that alone does not matter."),
-      h("li", {}, "Use “Larger” to open a clip in a bigger view. Your answers are saved after every page; if you stop, sign in again with the same name to continue.")),
+      h("li", {}, "Click a video to pause or play it. Your answers are saved after every page; if you stop, sign in again with the same name to continue.")),
     h("div", { class: "step" }, h("button", { class: "primary", onclick: () => {
       if (!S.started) {                          // the first time only: the start row (name, screen, the pages drawn)
         S.started = true; S.t_consent = now();
@@ -551,7 +562,7 @@ function showSendState() {
 }
 
 // ---------- one study page (layout of the sketch): scenario | control, the five videos in one row, scenario | control again,
-// then the questions in the first column and each clip's 0-5 answers right under that clip; compact instructions at the bottom ----------
+// then the questions in the first column and each clip's Yes / No right under that clip; compact instructions at the bottom ----------
 function pageScreen(sc, idx) {
   const pair = STUDY.pairs[sc.pair];
   const scen = scenarioOf(sc);
@@ -569,26 +580,28 @@ function pageScreen(sc, idx) {
     h("div", { class: "sc-box" }, h("div", { class: "sc-label" }, "Scenario"), h("div", {}, scen.line || "")),
     h("div", { class: "sc-box ctl" }, h("div", { class: "sc-label" }, "Control"), h("div", {}, control)));
 
-  // the five videos in one row: the original (the only tagged one) and clips A-D, full controls, no watching required
+  // the videos in one row: the original (the only tagged one) and clips A-C, playing and repeating on their own
   const vids = [];
   const cell = (id, key, title, isOrig) => {
-    const v = h("video", { src: clipUrl(id), muted: true, playsinline: true, controls: true, loop: false, preload: "auto", "aria-label": title });
-    v.muted = true;
+    const v = h("video", { src: clipUrl(id), muted: true, playsinline: true, loop: true, autoplay: true, preload: "auto", "aria-label": title,
+      title: "Click to pause or play", onclick: () => { if (v.paused) v.play().catch(() => {}); else v.pause(); } });   // no player controls
+    v.muted = true; v.loop = true; v.autoplay = true;          // (Nov 15) every video plays on its own and repeats
     v.addEventListener("play", () => { A.plays[key] = (A.plays[key] || 0) + 1; });
     v.addEventListener("ended", () => { A.ended[key] = true; });
     vids.push(v);
     return h("div", { class: "vcell" + (isOrig ? " orig" : "") }, v,
       h("div", { class: "vhead" }, isOrig ? h("span", { class: "tag" }, title) : h("span", { class: "letter" }, title),
-        h("button", { type: "button", class: "small ctl", onclick: () => openModal(id) }, "Larger")));
+        null));
   };
   const board = h("div", { class: "board" });
   const vrow = h("div", { class: "cols vrow" }, cell(pair.original, "orig", "Original recording", true),
     clips.map((id, k) => cell(id, LETTERS[k], "Clip " + LETTERS[k], false)));
   board.append(heads(), h("div", { class: "row tools" },
     h("button", { type: "button", class: "small", onclick: () => vids.forEach(v => { v.currentTime = 0; v.play().catch(() => {}); }) }, "▶ Play all from the start"),
+    h("button", { type: "button", class: "small", onclick: () => vids.forEach(v => v.play().catch(() => {})) }, "▶ Play all"),
     h("button", { type: "button", class: "small", onclick: () => vids.forEach(v => v.pause()) }, "❚❚ Pause all")), vrow, heads());
 
-  // the questions: first column = the question, then one 0-5 scale under each clip
+  // the questions: first column = the question, then Yes / No under each clip
   const qgrid = h("div", { class: "cols qgrid" });
   const left = h("span", { class: "note" });
   // Next works even with answers left (they can come back to them); Previous goes back one page, answers kept
@@ -601,16 +614,14 @@ function pageScreen(sc, idx) {
     const n = miss + (attnMiss ? 1 : 0);
     left.textContent = n ? `${n} answer${n === 1 ? "" : "s"} not given on this page yet (you can go on and come back later)` : "All answered.";
     if (idx + 1 >= total) {
-      const other = S.answers.reduce((a, r, j) => a + (j === idx || !r ? 0 : missingIn(r)), 0) + S.plan.screens.slice(0, idx).filter((_, j) => !S.answers[j]).length * QKEYS.length * 4;
+      const other = S.answers.reduce((a, r, j) => a + (j === idx || !r ? 0 : missingIn(r)), 0) + S.plan.screens.slice(0, idx).reduce((a, s, j) => a + (S.answers[j] ? 0 : QKEYS.length * s.clips.length), 0);
       if (other) left.textContent += ` · ${other} answer${other === 1 ? "" : "s"} still empty on earlier pages (use Previous page to fill them)`;
     }
   }
-  const scale = (name, label, onpick) => h("div", { class: "scale", role: "radiogroup", "aria-label": label },
-    h("span", { class: "end" }, "0"),
-    ...[0, 1, 2, 3, 4, 5].map(n => h("input", { type: "radio", name, value: n, "aria-label": label + ": " + n, title: String(n), onchange: () => {
-      if (A.first_answer_ms == null) A.first_answer_ms = now() - A.t0; onpick(n); upd(); } })),
-    h("span", { class: "end" }, "5"));
-  qgrid.append(h("div", { class: "qhead" }, "0 = not at all · 5 = completely"), ...letters.map(L => h("div", { class: "qhead c" }, "Clip " + L)));
+  const scale = (name, label, onpick) => h("div", { class: "scale yn", role: "radiogroup", "aria-label": label },
+    ...[[1, "Yes"], [0, "No"]].map(([n, word]) => h("label", {}, h("input", { type: "radio", name, value: n, "aria-label": label + ": " + word, onchange: () => {
+      if (A.first_answer_ms == null) A.first_answer_ms = now() - A.t0; onpick(n); upd(); } }), word)));
+  qgrid.append(h("div", { class: "qhead" }, "Yes or No for each clip"), ...letters.map(L => h("div", { class: "qhead c" }, "Clip " + L)));
   const rows = QS.map(([k, text]) => [k, text]);
   if (sc.attention != null) rows.splice(1 + (hash(S.pid + "|" + idx) % QS.length), 0, ["__attn", `Attention check: please choose ${sc.attention} for every clip in this row.`]);
   for (const [k, text] of rows) {
@@ -621,6 +632,7 @@ function pageScreen(sc, idx) {
   }
   board.append(qgrid, h("div", { class: "row nextrow" }, back, btn, left));
   app.append(board);
+  vids.forEach(v => { v.currentTime = 0; v.play().catch(() => {}); });   // start together, then each repeats
 
   // at the bottom of every page: the full instructions for each question, always visible (no dropdown)
   app.append(h("div", { class: "card instr" },
@@ -628,9 +640,10 @@ function pageScreen(sc, idx) {
   // a page visited before: show the answers given then (and keep them)
   const prev = S.answers[idx];
   if (prev && prev.ratings) {
-    const L2c = prev.positions || {};
+    const yn = prev.scale === "yesno";
     for (const L of letters) {
-      const r = prev.ratings[L2c[L] || byLetter[L]] || {};
+      const r0 = prev.ratings[byLetter[L]] || {};     // by clip (the saved ratings are keyed by clip), so moved letters keep their scores
+      const r = Object.fromEntries(QKEYS.map(q => [q, yn ? r0[q] : YESNO_FROM_0_5(r0[q])]));   // an old 0-5 page: shown as Yes / No
       for (const q of QKEYS) if (r[q] != null) { A.r[q][L] = r[q]; const el = qgrid.querySelector(`input[name="${q}_${L}"][value="${r[q]}"]`); if (el) el.checked = true; }
     }
     if (prev.attention_given && sc.attention != null) {
@@ -647,7 +660,7 @@ function pageScreen(sc, idx) {
     const per = {};
     for (const L of letters) { per[byLetter[L]] = { letter: L }; for (const q of QKEYS) per[byLetter[L]][q] = A.r[q][L]; }
     const rec = { page: idx, scenario: sc.scenario, scene: sc.scene, pair: sc.pair, variant: sc.variant, original: pair.original,
-      positions: byLetter, ratings: per, attention_asked: sc.attention, attention_given: A.attnv || null,
+      positions: byLetter, ratings: per, scale: "yesno", attention_asked: sc.attention, attention_given: A.attnv || null,
       attention_ok: sc.attention != null ? A.attention === sc.attention : null,
       plays: A.plays, ended: A.ended, ms: (A.ms_before || 0) + now() - A.t0, first_answer_ms: A.first_answer_ms,
       missing: 0 };
@@ -658,7 +671,7 @@ function pageScreen(sc, idx) {
     if (S.i >= S.plan.screens.length) {
       S.code = S.code || randId(8);
       send("finish", { code: S.code, total_ms: now() - S.t_consent, attention_ok: S.answers.filter(r => r && r.attention_ok !== null).map(r => r.attention_ok), about: S.about, answers: S.answers.filter(Boolean),
-        missing_answers: S.answers.reduce((a, r) => a + (r ? missingIn(r) : QKEYS.length * 4), 0) });
+        missing_answers: S.plan.screens.reduce((a, s, j) => a + (S.answers[j] ? missingIn(S.answers[j]) : QKEYS.length * s.clips.length), 0) });
       S.page = "done";
     } else if (S.plan.screens.length >= 10 && S.i % 10 === 0 && !(S.breaks || []).includes(S.i)) { S.breaks = (S.breaks || []).concat(S.i); S.page = "break"; }
     save(); render();
@@ -679,7 +692,11 @@ document.getElementById("modalClose").addEventListener("click", () => { const m 
   let last = null;
   try { last = localStorage.getItem(LASTKEY); } catch (e) {}
   const st = last ? loadFor(last) : null;
-  if (st && st.study === STUDY.study && st.page !== "left") { S = st; S.sess = randId(6); save(); flush(); render(); }
+  if (st && st.study === STUDY.study && st.page !== "left") {
+    // (Nov 15) a draw saved in this browser before clips were removed: drop clips the study no longer has
+    for (const s of ((st.plan || {}).screens || [])) { const k = (s.clips || []).filter(inStudy); if (k.length) s.clips = k; }
+    S = st; S.sess = randId(6); save(); flush(); render();
+  }
   else { S = { page: "login", outbox: [] }; render(); }
 })();
 </script>

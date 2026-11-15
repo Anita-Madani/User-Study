@@ -7,10 +7,7 @@
    "S4",
    "S5"
   ],
-  "scale": [
-   0,
-   5
-  ]
+  "scale": "yes/no"
  },
  "scenarios": [
   {
@@ -113,16 +110,14 @@
     "V1": {
      "control": "The pedestrian stands on the line to the left of the camera car's lane and leans toward the lane, keeping both feet on the line.",
      "clips": [
-      "e1355294a0",
       "c6d1c4083d",
-      "58cce153da",
-      "8184211d16"
+      "e1355294a0",
+      "58cce153da"
      ]
     },
     "V2": {
      "control": "The pedestrian steps off the line to the left of the camera car's lane and stands one step inside the lane.",
      "clips": [
-      "7dbde1ce69",
       "804c0561d9",
       "de1f2fb6b7",
       "fc6fe35fc5"
@@ -136,19 +131,17 @@
     "V1": {
      "control": "The pedestrian stops on the centre line and stays there without stepping into the camera car's lane.",
      "clips": [
-      "7def57db58",
-      "ee39230f66",
       "63ddd3a66d",
-      "eab249ccf5"
+      "7def57db58",
+      "ee39230f66"
      ]
     },
     "V2": {
      "control": "The pedestrian on the centre line briefly steps into the camera car's lane, then steps back.",
      "clips": [
+      "fe13631b6c",
       "5b4f07f1eb",
-      "4166896aee",
-      "5a32ff3ca0",
-      "fe13631b6c"
+      "4166896aee"
      ]
     }
    }
@@ -159,10 +152,9 @@
     "V1": {
      "control": "The pedestrian waves the camera car on and stays on the curb.",
      "clips": [
-      "9d8419ccff",
+      "2a80a173e9",
       "8f037363a4",
-      "5ae3b00edb",
-      "2a80a173e9"
+      "9d8419ccff"
      ]
     },
     "V2": {
@@ -170,8 +162,7 @@
      "clips": [
       "56d510f7be",
       "3df147d637",
-      "431cf3dc97",
-      "cff91050ff"
+      "431cf3dc97"
      ]
     }
    }
@@ -182,19 +173,17 @@
     "V1": {
      "control": "The pedestrian steps out early, while the camera car is still far away, and crosses with a short pause in the middle.",
      "clips": [
+      "6487065dbc",
       "e27c806110",
-      "5d3c5f7adb",
-      "9d3182771c",
-      "6487065dbc"
+      "5d3c5f7adb"
      ]
     },
     "V2": {
      "control": "The pedestrian steps out late, when the camera car is close, and stops suddenly at the edge of its lane.",
      "clips": [
-      "ffacb236c9",
       "db47bbb79a",
-      "cc3c9aa7e0",
-      "076437fc1f"
+      "076437fc1f",
+      "ffacb236c9"
      ]
     }
    }
@@ -205,10 +194,9 @@
     "V1": {
      "control": "The child runs out from behind a line of stopped cars.",
      "clips": [
-      "3a7b1c901b",
-      "75cc99d99d",
       "5dabb5b3cb",
-      "cda0375a5f"
+      "75cc99d99d",
+      "3a7b1c901b"
      ]
     },
     "V2": {
@@ -216,8 +204,7 @@
      "clips": [
       "6e9d934f29",
       "e7daaa52da",
-      "e32b8c07da",
-      "ff9430e6ec"
+      "e32b8c07da"
      ]
     }
    }
@@ -228,7 +215,6 @@
     "V1": {
      "control": "The child runs across the road on the crosswalk.",
      "clips": [
-      "624eda22b0",
       "d30e4a5641",
       "c5ed703cdf",
       "4a61c916e6"
@@ -237,10 +223,9 @@
     "V2": {
      "control": "The child runs across the road where there is no crosswalk.",
      "clips": [
-      "143804c2b0",
       "e9a9adfefa",
-      "8058cc39e2",
-      "a68ac36204"
+      "a68ac36204",
+      "8058cc39e2"
      ]
     }
    }
@@ -251,10 +236,9 @@
     "V1": {
      "control": "The children cross in a single line, one behind another.",
      "clips": [
-      "610a4505b0",
-      "3163982499",
+      "bf06762a66",
       "06db3f0811",
-      "bf06762a66"
+      "3163982499"
      ]
     },
     "V2": {
@@ -262,8 +246,7 @@
      "clips": [
       "a23a25e216",
       "5230a8884e",
-      "ec21af6193",
-      "7456c0b1db"
+      "ec21af6193"
      ]
     }
    }
@@ -275,18 +258,16 @@
      "control": "A single child sits down on the road and stays there.",
      "clips": [
       "999fdeb84c",
-      "4289cdf8f4",
-      "de756a3289",
-      "e80fc1d628"
+      "e80fc1d628",
+      "de756a3289"
      ]
     },
     "V2": {
      "control": "Several children run around and play on the crosswalk.",
      "clips": [
-      "d30187be50",
       "3317a1adcb",
-      "51c1575e5a",
-      "080f0e91da"
+      "080f0e91da",
+      "51c1575e5a"
      ]
     }
    }
@@ -297,19 +278,17 @@
     "V1": {
      "control": "The camera car itself approaches the crossing children much faster than normal.",
      "clips": [
-      "1aa21105ed",
-      "6c8345fb83",
       "89e4b24298",
-      "25409416a6"
+      "25409416a6",
+      "6c8345fb83"
      ]
     },
     "V2": {
      "control": "Another car ahead of the camera car drives fast toward the crossing children and brakes hard just short of them.",
      "clips": [
-      "df0f2f2b6e",
-      "75d791ff1b",
       "578abcb354",
-      "0beffbce41"
+      "0beffbce41",
+      "df0f2f2b6e"
      ]
     }
    }
@@ -320,10 +299,9 @@
     "V2": {
      "control": "The courier walks from the front of the van across the camera car's lane toward the houses on the right, without looking at traffic.",
      "clips": [
-      "1c26173662",
       "beae2a6100",
-      "ed56e9763b",
-      "53df3e5870"
+      "53df3e5870",
+      "ed56e9763b"
      ]
     }
    }
@@ -334,9 +312,8 @@
     "V2": {
      "control": "The courier stands beside the van on the traffic side, right at the edge of the camera car's lane.",
      "clips": [
-      "58b6f28416",
       "adc603b062",
-      "74c677b72f",
+      "58b6f28416",
       "164d9b47c1"
      ]
     }
@@ -348,9 +325,8 @@
     "V2": {
      "control": "A worker walks out of the closed-off lane into the camera car's lane.",
      "clips": [
-      "aa5dd5ed70",
-      "451eb5ada5",
       "db44cb7778",
+      "451eb5ada5",
       "8bde3c943e"
      ]
     }
@@ -362,10 +338,9 @@
     "V2": {
      "control": "A worker walks around the back left corner of the truck into the oncoming lane.",
      "clips": [
-      "b745a91d04",
-      "5f33c33d6a",
+      "3b43443798",
       "fc213bbb70",
-      "3b43443798"
+      "5f33c33d6a"
      ]
     }
    }
@@ -376,10 +351,9 @@
     "V2": {
      "control": "One of two workers walks from the back of the truck across the road toward the bins at the left curb, while the other stays at the truck.",
      "clips": [
-      "d2fdf836ee",
       "ec58052936",
-      "18ca610a67",
-      "4a613e093d"
+      "4a613e093d",
+      "18ca610a67"
      ]
     }
    }
@@ -390,10 +364,9 @@
     "V2": {
      "control": "The worker rolls a bin away from the back of the truck to the right curb.",
      "clips": [
-      "c9418a3322",
+      "6c89d6b540",
       "9a6b610653",
-      "27035d00af",
-      "6c89d6b540"
+      "c9418a3322"
      ]
     }
    }
@@ -404,10 +377,9 @@
     "V2": {
      "control": "The worker carries a trash can from the left curb across the oncoming lane toward the truck.",
      "clips": [
-      "d3f6713c6d",
-      "8ec5aa1387",
+      "a8f64e53ac",
       "8a6d3446c6",
-      "a8f64e53ac"
+      "8ec5aa1387"
      ]
     }
    }
@@ -418,18 +390,16 @@
     "V1": {
      "control": "The pedestrian wears a black coat and dark trousers.",
      "clips": [
-      "5938629d9e",
+      "6b83a0bdfa",
       "7840b10867",
-      "788ddd2e9f",
-      "6b83a0bdfa"
+      "788ddd2e9f"
      ]
     },
     "V2": {
      "control": "The pedestrian wears a white jacket with a yellow reflective vest over it, and light grey trousers.",
      "clips": [
-      "f8b6eb8ffa",
       "bb46e591d5",
-      "275cdbe4a0",
+      "f8b6eb8ffa",
       "b6cf203f4f"
      ]
     }
@@ -441,19 +411,17 @@
     "V1": {
      "control": "A group of four pedestrians walks close together across the road from the right sidewalk to the left.",
      "clips": [
-      "d06ea7af0c",
       "6a7756bcbb",
-      "c08fc8012f",
-      "eda4ea4dc1"
+      "eda4ea4dc1",
+      "d06ea7af0c"
      ]
     },
     "V2": {
      "control": "A group of four pedestrians walks together along the right edge of the camera car's lane, toward the camera car, without crossing.",
      "clips": [
-      "9b1b958dac",
-      "79be330a58",
+      "a7c4c483d1",
       "14f76f7ced",
-      "a7c4c483d1"
+      "79be330a58"
      ]
     }
    }
@@ -464,19 +432,17 @@
     "V1": {
      "control": "The pedestrian walks out from in front of a van stopped in the lane to the left, into the camera car's lane.",
      "clips": [
+      "65d644d5b7",
       "816d7413d0",
-      "28fdedfaa0",
-      "4505853a5b",
-      "65d644d5b7"
+      "28fdedfaa0"
      ]
     },
     "V2": {
      "control": "The pedestrian stands still at the front right corner of a van stopped in the lane to the left, partly hidden, and does not step into the camera car's lane.",
      "clips": [
-      "6aedeff1f5",
-      "4464b8f8ab",
       "cac95e5704",
-      "9d3c3660a0"
+      "9d3c3660a0",
+      "4464b8f8ab"
      ]
     }
    }
@@ -487,19 +453,17 @@
     "V1": {
      "control": "An older woman slowly pushes a baby stroller from the right sidewalk out into the camera car's lane.",
      "clips": [
-      "d330f385da",
-      "dad2da05eb",
       "6c09b66d18",
+      "dad2da05eb",
       "cabcc96da7"
      ]
     },
     "V2": {
      "control": "An older woman slowly pushes a baby stroller along the right edge of the camera car's lane, facing away from it.",
      "clips": [
-      "9ce4d6581b",
-      "102f0e0353",
+      "a4f8273b6e",
       "ba7b19c519",
-      "a4f8273b6e"
+      "102f0e0353"
      ]
     }
    }
