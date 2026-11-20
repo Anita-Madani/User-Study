@@ -89,7 +89,7 @@ button.leave { color: var(--muted); background: var(--panel); pointer-events: au
 .sc-box { background: var(--chip); border-left: 4px solid var(--accent); border-radius: 6px; padding: 5px 12px; font-size: 1rem; }
 .sc-box.ctl { border-left-color: var(--warn); }
 .sc-label { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.cols { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
 .vrow { position: sticky; top: 0; z-index: 5; background: var(--panel); padding: 6px 0; }
 .vcell { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
 .vcell.orig { border: 2px solid var(--accent); }
@@ -484,7 +484,7 @@ function pageLogin() {
     h("h1", {}, "Driving Video Editing Evaluation Study"),
     h("h2", {}, "Study overview"),
     h("p", {}, "This study evaluates AI methods that edit driving videos recorded from a car (the camera car). On each page you watch the original video " +
-      "and three edited videos, then answer four Yes / No questions about each edited video."),
+      "and four edited videos, then answer four Yes / No questions about each edited video."),
     h("div", { class: "wcols" },
       h("div", {},
         h("h3", {}, "What each page shows"),
@@ -492,7 +492,7 @@ function pageLogin() {
           "and where, compared with the camera car). Example: “A child unexpectedly moves into the road close in front of the camera car.”"),
         item("Control", "The specific way the scenario should play out on this page. The same scenario comes in different versions: e.g. the child " +
           "runs out from behind a parked school bus on one page, and from behind parked cars on another."),
-        item("Videos", "The original recording, for comparison, and three edited videos, Clip A to Clip C. They play and repeat on their own. You rate only the edited clips.")),
+        item("Videos", "The original recording, for comparison, and four edited videos, Clip A to Clip D. They play and repeat on their own. You rate only the edited clips.")),
       h("div", {},
         h("h3", {}, "Evaluation criteria"),
         item("1. Scenario", "Is this scenario happening? Does the clip show what the edit was meant to do? For example, if it says " +
@@ -513,9 +513,9 @@ function pageIntro() {
   const n = S.plan.screens.length;
   app.append(h("div", { class: "card" },
     h("h2", {}, "How it works"),
-    h("p", {}, `You will see ${n} pages. On each page, answer Yes or No for every clip A–C on four questions.`),
+    h("p", {}, `You will see ${n} pages. On each page, answer Yes or No for every clip A–D on four questions.`),
     h("ul", { class: "tips" },
-      h("li", {}, h("b", {}, "Original recording: "), "the unedited video, for comparison. Clips A–C are edited versions of it, in a random order. Only the clips are rated."),
+      h("li", {}, h("b", {}, "Original recording: "), "the unedited video, for comparison. Clips A–D are edited versions of it, in a random order. Only the clips are rated."),
       h("li", {}, h("b", {}, "Is this scenario happening? "), "Does the clip show the scenario written at the top (the people or objects it names, doing what it says)?"),
       h("li", {}, h("b", {}, "Is this control happening? "), "Does the clip show the specific version written under Control (for example where the person comes from, or what they do)?"),
       h("li", {}, h("b", {}, "Is it safety-critical? "), "Is someone close enough to the camera car's path that the car could hit them if it did not slow down or steer?"),
@@ -694,7 +694,10 @@ document.getElementById("modalClose").addEventListener("click", () => { const m 
   const st = last ? loadFor(last) : null;
   if (st && st.study === STUDY.study && st.page !== "left") {
     // (Nov 15) a draw saved in this browser before clips were removed: drop clips the study no longer has
-    for (const s of ((st.plan || {}).screens || [])) { const k = (s.clips || []).filter(inStudy); if (k.length) s.clips = k; }
+    // (Nov 19) the fourth clip is back: a page not answered yet gets every clip of its request (at a random place); answered pages stay as rated
+    ((st.plan || {}).screens || []).forEach((s, j) => { const k = (s.clips || []).filter(inStudy); if (k.length) s.clips = k;
+      const V_ = (STUDY.pairs[s.pair] || { variants: {} }).variants[s.variant];
+      if (V_ && !(st.answers || [])[j]) for (const c of V_.clips) if (!s.clips.includes(c)) s.clips.splice(Math.floor(Math.random() * (s.clips.length + 1)), 0, c); });
     S = st; S.sess = randId(6); save(); flush(); render();
   }
   else { S = { page: "login", outbox: [] }; render(); }
