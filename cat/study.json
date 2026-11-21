@@ -1,0 +1,95 @@
+{
+ "study": "driving-video-study-cat",
+ "settings": {
+  "per_scene": 5,
+  "v2_only": [
+   "C1",
+   "C2",
+   "C3"
+  ],
+  "scale": "yes/no"
+ },
+ "scenarios": [
+  {
+   "id": "C1",
+   "name": "Children playing basketball",
+   "line": "Two children are playing on the crosswalk ahead, in the camera car's lane.",
+   "scenes": [
+    {
+     "id": "C1a",
+     "pairs": [
+      "c01"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C2",
+   "name": "Ambulance and stretcher",
+   "line": "An ambulance is stopped in the camera car's lane ahead and two paramedics on foot move a stretcher behind it.",
+   "scenes": [
+    {
+     "id": "C2a",
+     "pairs": [
+      "c02"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C3",
+   "name": "Taxi door",
+   "line": "A man on foot stands in the road beside the driver's door of a taxi parked on the right of the camera car's lane.",
+   "scenes": [
+    {
+     "id": "C3a",
+     "pairs": [
+      "c03"
+     ]
+    }
+   ]
+  }
+ ],
+ "pairs": {
+  "c01": {
+   "original": "k3qbems97p",
+   "variants": {
+    "V2": {
+     "control": "The two children stay on the crosswalk and throw one basketball back and forth to each other, and the camera car brakes and stops just short of them.",
+     "clips": [
+      "kcbdbzbnnu",
+      "kvyxcnhbp2",
+      "kwvh3w5bjy"
+     ]
+    }
+   }
+  },
+  "c02": {
+   "original": "kc5w3wt28y",
+   "variants": {
+    "V2": {
+     "control": "Two paramedics wheel an empty stretcher from the ambulance's rear doors to the right-hand sidewalk.",
+     "clips": [
+      "k8tx2ezzjv",
+      "ktjzfhn9xw",
+      "k3jmevjbm5"
+     ]
+    }
+   }
+  },
+  "c03": {
+   "original": "kzzydgtbs5",
+   "variants": {
+    "V2": {
+     "control": "The man pulls the driver's door of the taxi open toward the camera car's lane, and the door visibly swings open.",
+     "clips": [
+      "ktnwzsz9x7",
+      "kavq78nytk",
+      "kj4p2vxtds"
+     ]
+    }
+   }
+  }
+ },
+ "practice": null
+}

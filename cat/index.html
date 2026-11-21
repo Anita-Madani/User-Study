@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driving Video Study</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root {
+  --bg: #f6f5f2; --panel: #ffffff; --ink: #1d2126; --muted: #5d6670; --line: #dcdad4; --accent: #2f5d8a; --accent-ink: #ffffff;
+  --ok: #2e7d4f; --warn: #a3541a; --chip: #eef2f6; --sel: #dfe9f4; --shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #15181c; --panel: #1e2228; --ink: #e7e9ec; --muted: #a2abb5; --line: #343a42; --accent: #7fb0e0; --accent-ink: #0f1419;
+          --ok: #6cc596; --warn: #e2a06a; --chip: #262c34; --sel: #23384d; --shadow: none; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 1560px; margin: 0 auto; padding: 8px max(16px, env(safe-area-inset-left)) 60px; }
+h1 { font-size: 1.5rem; margin: 0 0 .4rem; text-wrap: balance; }
+h2 { font-size: 1.15rem; margin: 0 0 .5rem; }
+p { margin: .4rem 0 .8rem; max-width: 72ch; }
+.muted { color: var(--muted); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 8px 14px; cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+label { cursor: pointer; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.progress { flex: 1 1 240px; height: 8px; background: var(--chip); border-radius: 99px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.scenario { white-space: pre-line; font-size: 1.05rem; padding: 12px 14px; border-left: 4px solid var(--accent); background: var(--chip); border-radius: 6px; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 12px 0; }
+@media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.clip { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.clip video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+.clip.origclip { border: 2px solid var(--accent); }
+.tag { background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: .85rem; padding: 2px 10px; border-radius: 99px; }
+.cliphead { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; gap: 8px; }
+.letter { font-weight: 700; font-size: 1.05rem; }
+.seen { font-size: .8rem; color: var(--muted); }
+.seen.ok { color: var(--ok); }
+.small { font-size: .85rem; padding: 4px 9px; }
+.step { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+.step.locked { opacity: .65; }
+.q { font-weight: 600; margin-bottom: 8px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; background: var(--panel); display: inline-flex; align-items: center; gap: 6px; }
+.opt.on { background: var(--sel); border-color: var(--accent); }
+table.rate { border-collapse: collapse; width: 100%; max-width: 820px; }
+table.rate th, table.rate td { padding: 6px 6px; border-bottom: 1px solid var(--line); text-align: center; }
+table.rate th:first-child, table.rate td:first-child { text-align: left; white-space: nowrap; }
+table.rate td.attn { white-space: normal; }   /* the attention label wraps, so the table still fits a phone */
+@media (max-width: 560px) {                    /* phones: the 0-5 scale fits the width, no sideways scrolling */
+  table.rate th, table.rate td { padding: 6px 2px; }
+  table.rate .legend { display: none; }        /* phones: numbers only; the note under each question says what 0 and 5 mean */
+  table.rate input[type=radio] { width: 20px; height: 20px; }
+}
+.card > .step:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+.scalewrap { overflow-x: auto; }
+.legend { font-size: .85rem; color: var(--muted); }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.orig { flex: 1 1 380px; max-width: 520px; }
+.orig video { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; display: block; }
+.note { font-size: .85rem; color: var(--muted); }
+.warn { color: var(--warn); }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.82); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+.modal video { width: min(1100px, 100%); max-height: 86vh; background: #000; }
+.modal button { position: absolute; top: 14px; right: 16px; }
+.field { margin: 10px 0 14px; }
+.field select, .field input[type=text] { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.code { font: 600 1.4rem/1.2 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em; padding: 10px 14px; background: var(--chip); border-radius: 8px; display: inline-block; }
+.clipctl { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 10px 10px; }
+.ctl { min-height: 36px; }
+button.play { min-width: 96px; font-weight: 600; }
+.orig .clipctl { padding: 6px 0 0; }
+#modalPlay { right: auto; left: 16px; }
+.leavebar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-bottom: 8px; position: sticky; top: max(8px, env(safe-area-inset-top, 0px)); z-index: 40; pointer-events: none; }
+button.leave { color: var(--muted); background: var(--panel); pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,.12); }   /* stays in view while scrolling */
+.dialog { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+.dialog .card { max-width: 540px; width: 100%; margin: 0; }
+.dbtns { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.dbtns button { text-align: left; min-height: 40px; }
+
+.board { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 14px; overflow-x: auto; }
+.board > * { min-width: 860px; }
+.sc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin: 6px 0; }
+.sc-box { background: var(--chip); border-left: 4px solid var(--accent); border-radius: 6px; padding: 5px 12px; font-size: 1rem; }
+.sc-box.ctl { border-left-color: var(--warn); }
+.sc-label { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.vrow { position: sticky; top: 0; z-index: 5; background: var(--panel); padding: 6px 0; }
+.vcell { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.vcell.orig { border: 2px solid var(--accent); }
+.vcell video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; cursor: pointer; }
+.vhead { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 2px 8px; }
+.tools { gap: 8px; margin: 4px 0; }
+.qgrid { margin-top: 8px; row-gap: 0; }
+.qgrid > div { padding: 5px 4px; border-bottom: 1px solid var(--line); display: flex; align-items: center; }
+.qhead { font-size: .8rem; color: var(--muted); }
+.qhead.c { justify-content: center; font-weight: 600; color: var(--ink); }
+.qtext { font-weight: 600; }
+.qtext.attn { color: var(--warn); font-weight: 600; }
+.qcell { justify-content: center; }
+.scale { display: flex; align-items: center; gap: 6px; }
+.scale input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+.scale .end { font-size: .8rem; color: var(--muted); font-weight: 600; }
+.scale.yn { justify-content: center; gap: 14px; }
+.scale.yn label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: .95rem; }
+.nextrow { align-items: center; margin-top: 10px; gap: 12px; }
+.instr p { margin: 0; max-width: none; }
+.instr details { margin-top: 8px; }
+.instr summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.instr ul { margin: 8px 0 0; padding-left: 20px; }
+.instr li { margin: 3px 0; }
+.defs { display: grid; gap: 4px; }
+.short { display: grid; gap: 4px; margin: 6px 0 10px; }
+.welcome h1 { font-size: 1.6rem; }
+.welcome h2 { margin-top: 10px; }
+.welcome h3 { font-size: 1.1rem; margin: 10px 0 6px; }
+.wcols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 760px) { .wcols { grid-template-columns: minmax(0, 1fr); } }
+.witem { margin: 4px 0 8px; }
+.wt { font-weight: 700; }
+.witem ul { margin: 2px 0 0; padding-left: 20px; }
+.witem li.ex { list-style: none; margin-left: -18px; font-size: .92rem; }
+.witem li.ex.hi b { color: var(--ok); }
+.witem li.ex.lo b { color: var(--warn); }
+.wdetails { background: var(--sel); color: var(--ink); border-radius: 8px; padding: 10px 14px; margin: 12px 0; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="card"><p>Loading…</p></div></div>
+<div class="modal" id="modal" hidden><button id="modalClose">Close ✕</button><video id="modalVideo" controls loop muted playsinline></video></div>
+<script src="config.js"></script>
+<script>
+"use strict";
+const CFG = Object.assign({ supabaseUrl: "", supabaseKey: "", table: "responses", studyId: "driving-video-study", minutes: 40 }, window.STUDY_CONFIG || {});
+const LASTKEY = "study_last_" + CFG.studyId;                 // the participant last signed in on this browser
+const keyFor = pid => "study_state_" + CFG.studyId + "_" + pid;   // one saved state per participant (per name)
+const LETTERS = ["A", "B", "C", "D", "E", "F"];
+const SCALE = [[1, "Clearly not real"], [2, "Mostly not real"], [3, "Unsure"], [4, "Mostly real"], [5, "Looks like a real camera recording"]];
+let S = null, STUDY = null;
+const app = document.getElementById("app");
+
+// ---------- helpers ----------
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, ""); else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return e;
+}
+function hash(str) { let x = 2166136261; for (const c of str) { x ^= c.charCodeAt(0); x = Math.imul(x, 16777619); } return x >>> 0; }
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function shuffle(arr, r) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function randId(n) { const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; const b = new Uint32Array(n); crypto.getRandomValues(b); for (const x of b) s += c[x % c.length]; return s; }
+function save() { if (!S || !S.pid) return; try { localStorage.setItem(keyFor(S.pid), JSON.stringify(S)); localStorage.setItem(LASTKEY, S.pid); } catch (e) {} }
+function loadFor(pid) { try { return JSON.parse(localStorage.getItem(keyFor(pid)) || "null"); } catch (e) { return null; } }
+function clipUrl(id) { return "clips/" + id + ".mp4"; }
+function now() { return Date.now(); }
+
+// ---------- sending answers ----------
+// Every message becomes one row of the Supabase table (PostgREST insert). A message leaves the outbox (kept in localStorage)
+// only once the server answered 2xx; otherwise it stays and is retried after 5 s, 10 s, 20 s, ... at most 60 s.
+// One sender at a time, oldest message first; "mid" is unique per message, so a row stored twice can be dropped in analysis.
+const DBROOT = CFG.supabaseUrl ? CFG.supabaseUrl.replace(/\/+$/, "") + "/rest/v1/" : "";
+const DB = DBROOT ? DBROOT + encodeURIComponent(CFG.table) : "";
+let flushing = false, retryTimer = null, backoff = 5000, sendFailed = false;
+function send(kind, data) {
+  S.nmsg = (S.nmsg || 0) + 1;
+  const msg = Object.assign({ kind, study: CFG.studyId, pid: S.pid, list: S.list, mid: S.pid + "-" + (S.sess || "s") + "-" + S.nmsg, sent_at: new Date().toISOString() }, data);
+  S.outbox.push(msg); save();
+  if (!retryTimer) flush();
+}
+function dbRow(msg) {
+  const r = msg.record || {};
+  return { study: msg.study, pid: msg.pid, list: msg.list, kind: msg.kind, page: Number.isInteger(r.page) ? r.page : null,
+           pair: r.pair || null, prompt: r.variant || null, payload: msg };
+}
+async function flush() {
+  if (!DB || flushing || !S || !S.outbox) return;
+  flushing = true; clearTimeout(retryTimer); retryTimer = null;
+  try {
+    while (S.outbox.length) {
+      const msg = S.outbox[0];
+      let ok = false;
+      try {
+        const res = await fetch(DB, { method: "POST", body: JSON.stringify(dbRow(msg)), headers: { apikey: CFG.supabaseKey,
+          Authorization: "Bearer " + CFG.supabaseKey, "Content-Type": "application/json", Prefer: "return=minimal" } });
+        ok = res.ok;
+      } catch (e) {}
+      if (!ok) { sendFailed = true; retryTimer = setTimeout(flush, backoff); backoff = Math.min(2 * backoff, 60000); return; }
+      const k = S.outbox.indexOf(msg); if (k >= 0) S.outbox.splice(k, 1);
+      S.sent += 1; backoff = 5000; sendFailed = false; save();
+    }
+  } finally { flushing = false; showSendState(); forgetIfDone(); }
+}
+function retryNow() { backoff = 5000; flush(); }
+addEventListener("online", retryNow);
+
+// ---------- plan for this participant ----------
+// The scenarios in a random order; for each scenario ONE scene at random, and every request of that scene (at most
+// settings.per_scene, random ones if there are more), each with ONE prompt: V2 for the scenarios in settings.v2_only, else V1 or V2 at
+// random. The pages of a scenario come one after the other. Drawn once from the participant's id (made from their name).
+function pick(arr, r) { return arr[Math.floor(r() * arr.length)]; }
+function makePlan(pid) {
+  const set = STUDY.settings || {};
+  const r = rng(hash((pid || S.pid) + "|plan3"));
+  const v2only = new Set(set.v2_only || []);
+  let screens = [];
+  for (const sc of shuffle(STUDY.scenarios, r)) {
+    const scene = pick(sc.scenes, r);
+    const pairs = shuffle(scene.pairs, r).slice(0, set.per_scene || 5);
+    for (const pid_ of pairs) {
+      const P = STUDY.pairs[pid_];
+      const v = v2only.has(sc.id) || !P.variants.V1 ? "V2" : (!P.variants.V2 ? "V1" : (r() < 0.5 ? "V1" : "V2"));
+      screens.push({ scenario: sc.id, scene: scene.id, pair: pid_, variant: v, clips: shuffle(P.variants[v].clips, r) });
+    }
+  }
+  screens.forEach(s => { s.attention = null; });       // no attention checks (removed Nov 14)
+  return { list: "random", practice: [], screens };
+}
+
+// ---------- the four questions, each clip answered Yes (1) or No (0) (Nov 15; before: 0-5, kept in the saved rows) ----------
+const YESNO_FROM_0_5 = v => (v == null ? null : (v >= 3 ? 1 : 0));   // an old 0-5 answer shown as Yes (3-5) / No (0-2)
+const QS = [
+  ["scenario", "Is this scenario happening?"],
+  ["control", "Is this control happening?"],
+  ["safety", "Is it safety-critical?"],
+  ["realism", "Does it look like a real scenario?"],
+];
+const QKEYS = QS.map(q => q[0]);
+const DEFS = [                                // one-line definitions under every page
+  ["Is this scenario happening?", "The clip shows the scenario written at the top."],
+  ["Is this control happening?", "The clip shows the specific version written under Control."],
+  ["Is it safety-critical?", "Someone is close enough to the camera car's path that it could hit them without braking or steering."],
+  ["Does it look like a real scenario?", "It looks and moves like a real recording of real traffic."],
+];
+// the full instructions for the first page after signing in: for each question, what to look at and what every score means
+const RUBRIC = [
+  { q: "Is this scenario happening?", what: "The scenario at the top happens in the clip.",
+    s: ["Not there", "There, but not doing it", "Partly", "Mostly", "Clearly, small issue", "Fully and clearly"] },
+  { q: "Is this control happening?", what: "Only the specific version under Control.",
+    s: ["No, or the opposite", "A trace", "Some", "About half", "Mostly", "Exactly as written"] },
+  { q: "Is it safety-critical?", what: "Could the car hit someone if it kept going?",
+    s: ["Nobody near the car's path", "People, but far away", "Near, no real risk", "Close: car must be careful", "In the path: car must slow down", "Car would hit someone"] },
+  { q: "Does it look like a real scenario?", what: "Looks and moves like real traffic footage.",
+    s: ["Clearly fake", "Mostly fake", "Several fake parts", "Some parts look or move wrong", "Small flaws only", "Looks fully real"] },
+];
+const SHORT = [                               // one line per question
+  ["Is this scenario happening?", "Does the clip show the scenario at the top?"],
+  ["Is this control happening?", "Does it show the specific version under Control?"],
+  ["Is it safety-critical?", "Could the car hit someone if it kept going?"],
+  ["Does it look like a real scenario?", "Could it be a real recording?"],
+];
+function rubricGrid(cls) {                    // the four questions, one line each
+  return h("div", { class: "short " + cls }, SHORT.map(([q, d]) => h("div", {}, h("b", {}, q + " "), d)));
+}
+function pageRange() {
+  const per = (STUDY.settings || {}).per_scene || 5;
+  let lo = 0, hi = 0;
+  for (const sc of STUDY.scenarios) { const c = sc.scenes.map(x => Math.min(per, x.pairs.length)); lo += Math.min(...c); hi += Math.max(...c); }
+  return [lo, hi];
+}
+function missingIn(rec) {                   // empty answers in a saved page (4 questions x 4 clips)
+  let n = 0;
+  for (const c of Object.values(rec.ratings || {})) for (const q of QKEYS) if (c[q] == null) n++;
+  return n;
+}
+function scenarioOf(sc) { return STUDY.scenarios.find(x => x.id === sc.scenario) || {}; }
+
+// ---------- pages ----------
+function render() {
+  window.scrollTo(0, 0);
+  app.replaceChildren();
+  const p = S.page;
+  if (p === "login") return pageLogin();
+  if (p === "left") return pageLeft();
+  if (["intro", "practice", "screen", "break"].includes(p)) app.append(leaveBar());
+  else if (["consent", "done"].includes(p)) app.append(switchBar());   // a shared computer: the next person can sign in
+  if (S.welcome) { app.append(welcomeCard()); S.welcome = false; save(); }
+  if (p === "consent") return pageConsent();
+  if (p === "intro") return pageIntro();
+  if (p === "screen") return pageScreen(S.plan.screens[S.i], S.i);
+  if (p === "break") return pageBreak();
+  if (p === "done") return pageDone();
+}
+
+// a Play / Pause button for one video: shows the video's current state, toggles it, keyboard-focusable
+function playBtn(v) {
+  const b = h("button", { type: "button", class: "small ctl play", onclick: e => { e.stopPropagation(); if (v.paused || v.ended) v.play().catch(() => {}); else v.pause(); upd(); } });
+  const upd = () => { const on = !v.paused && !v.ended; b.textContent = on ? "❚❚ Pause" : "▶ Play"; b.setAttribute("aria-pressed", on ? "true" : "false"); };
+  ["play", "playing", "pause", "ended", "emptied", "loadedmetadata"].forEach(ev => v.addEventListener(ev, upd));
+  upd();
+  return b;
+}
+
+// ---------- leaving the study (any page after consent) ----------
+function leaveBar() {
+  return h("div", { class: "leavebar" },
+    h("button", { type: "button", class: "small leave", onclick: switchPerson }, "Not " + ((S.about && S.about.name) || S.name || "you") + "? Switch person"));
+}
+function switchBar() {
+  return h("div", { class: "leavebar" },
+    h("button", { type: "button", class: "small leave", onclick: switchPerson }, "Not " + ((S.about && S.about.name) || S.name || "you") + "? Switch person"));
+}
+function switchPerson() {                     // this person's answers stay saved; they sign in again with their name
+  document.querySelectorAll("video").forEach(v => v.pause());
+  save();
+  try { localStorage.removeItem(LASTKEY); } catch (e) {}
+  S = { page: "login", outbox: [] }; render();
+}
+function welcomeCard() {
+  const n = S.plan.screens.length, k = S.page === "done" ? n : S.answers.length;
+  return h("div", { class: "card" }, h("b", {}, `Welcome back, ${(S.about && S.about.name) || S.name}.`), " ",
+    S.page === "done" ? "You have already finished the study." : `Your earlier answers are saved: ${k} of ${n} pages done. You continue where you stopped.`);
+}
+function openLeave() {
+  if (document.getElementById("leaveDlg")) return;
+  const playing = [...document.querySelectorAll("video")].filter(v => !v.paused);
+  playing.forEach(v => v.pause());
+  const close = () => { d.remove(); playing.forEach(v => v.play().catch(() => {})); };
+  const back = h("button", { type: "button", class: "primary", onclick: close }, "Go back to the study");
+  const d = h("div", { class: "dialog", id: "leaveDlg", role: "dialog", "aria-modal": "true", "aria-labelledby": "leaveTitle" },
+    h("div", { class: "card" },
+      h("h2", { id: "leaveTitle" }, "Stop and leave the study?"),
+      h("p", {}, "You can stop now. Please choose whether we may use the answers you have given so far."),
+      h("div", { class: "dbtns" },
+        h("button", { type: "button", onclick: () => leave(false) }, "Leave and keep my answers so far"),
+        h("button", { type: "button", onclick: () => leave(true) }, "Leave and delete my answers"),
+        back)));
+  d.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+  document.body.append(d);
+  back.focus();
+}
+function leave(discard) {
+  const d = document.getElementById("leaveDlg"); if (d) d.remove();
+  document.querySelectorAll("video").forEach(v => v.pause());
+  const where = S.page === "screen" ? S.i : S.page;
+  send("withdraw", { discard, page: where, screens_done: S.answers.length });
+  if (discard) {
+    S.outbox = S.outbox.filter(m => m.kind === "withdraw");
+    S.answers = []; S.about = null; S.practice = null;
+  }
+  S.left = { discard, at: new Date().toISOString() };
+  S.page = "left"; save(); render(); forgetIfDone();
+}
+function forgetIfDone() {
+  if (S && S.page === "left" && DB && !S.outbox.length) { try { localStorage.removeItem(keyFor(S.pid)); localStorage.removeItem(LASTKEY); } catch (e) {} }
+}
+function pageLeft() {
+  app.append(h("div", { class: "card" }, h("h2", {}, "You have left the study."),
+    h("p", {}, "Thank you for your time."),
+    S.left && S.left.discard ? h("p", {}, "Your answers will not be used.") : null,
+    h("p", { id: "leaveState", class: "muted" })));
+  showSendState();
+}
+
+function pageConsent() {
+  let ok = false;
+  const go = h("button", { class: "primary", disabled: true, onclick: () => {
+    S.page = "intro"; S.t_consent = now(); save();
+    send("start", { about: S.about, screen_px: [screen.width, screen.height], window_px: [innerWidth, innerHeight], ua: navigator.userAgent,
+                    plan: S.plan.screens.map(s => s.scene + ":" + s.pair + ":" + s.variant) });
+    render(); } }, "Continue");
+  app.append(h("div", { class: "card" },
+    h("h1", {}, "Rating short driving videos"),
+    h("p", {}, "In this study you will watch short, silent videos filmed from the front of a car and rate edited versions of them on a scale from 0 to 5. " +
+      "The videos were made by editing real recordings: people or objects may have been added or changed."),
+    h("p", {}, `It takes about ${CFG.minutes} minutes. There are no right or wrong answers; we want your own judgement of what you see.`),
+    h("p", {}, "Taking part is voluntary. You may stop at any time with the “Stop and leave the study” button or by closing the page, " +
+      "and you can ask for your answers to be deleted. We record the name you enter, your ratings, how long each page takes, " +
+      "and your screen size and browser type. We do not record your e-mail or IP address. Your name is used only to keep track of who took part; " +
+      "it is never published, and the answers are used for research and published only in aggregate, without names."),
+    h("p", { class: "muted" }, "Please use a computer or tablet with a reasonably large screen. If you stop or close the page, open the study " +
+      "again and sign in with the same name: you continue where you stopped, with your earlier answers kept."),
+    h("label", { class: "opt" }, h("input", { type: "checkbox", onchange: e => { ok = e.target.checked; go.disabled = !ok; } }),
+      "I agree to take part."),
+    h("div", { class: "step" }, go)));
+}
+
+// ---------- signing in with a name: the same name gives the same pages and brings back the earlier answers ----------
+function nameKey(n) { return String(n).normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase(); }
+function pidFor(n) {
+  const k = STUDY.study + "|" + nameKey(n);
+  return "u" + hash(k).toString(16).padStart(8, "0") + hash("2|" + k).toString(16).padStart(8, "0");
+}
+function newState(pid, name) {
+  const st = { study: STUDY.study, pid, name, about: { name }, page: "intro", i: 0, answers: [], outbox: [], sent: 0, nmsg: 0 };   // no consent page
+  st.plan = makePlan(pid); st.list = st.plan.list;
+  return st;
+}
+async function fetchProgress(pid) {           // this participant's earlier rows, through the study_progress function (read by name only)
+  if (!DBROOT) return [];
+  try {
+    const r = await fetch(DBROOT + "rpc/study_progress", { method: "POST", body: JSON.stringify({ p_study: CFG.studyId, p_pid: pid }),
+      headers: { apikey: CFG.supabaseKey, Authorization: "Bearer " + CFG.supabaseKey, "Content-Type": "application/json" } });
+    if (!r.ok) return [];
+    const rows = await r.json();
+    return Array.isArray(rows) ? rows : [];
+  } catch (e) { return []; }
+}
+let _inStudy = null;
+function inStudy(c) {                          // is this clip still shown in the study?
+  if (!_inStudy) { _inStudy = new Set(); for (const P of Object.values(STUDY.pairs)) for (const v of Object.values(P.variants)) v.clips.forEach(x => _inStudy.add(x)); }
+  return _inStudy.has(c);
+}
+function stateFromRows(pid, name, rows) {     // rebuild the saved state from the rows already stored for this name
+  const all = rows.map(r => r.payload || {});
+  let cut = -1;                                // "leave and delete my answers": nothing before it is used, so only rows after it count
+  all.forEach((m, j) => { if (m.kind === "withdraw" && m.discard) cut = j; });
+  const P = all.slice(cut + 1);
+  const last = k => P.filter(m => m.kind === k).pop();
+  const start = last("start"), fin = last("finish"), prac = last("practice");
+  if (!start) return null;                     // nothing kept for this name (or everything was deleted): start again
+  const st = newState(pid, name);
+  if (Array.isArray(start.plan) && start.plan.length) {     // the pages they were given (in case the study file changed since)
+    const ids = st.plan.screens.map(s => s.scene + ":" + s.pair + ":" + s.variant);
+    if (JSON.stringify(ids) !== JSON.stringify(start.plan)) {
+      const r = rng(hash(pid + "|replan"));
+      st.plan.screens = start.plan.map((x, j) => { const [scene, pair, variant] = x.split(":"); const P_ = STUDY.pairs[pair];
+        return { scene, pair, variant, scenario: (STUDY.scenarios.find(s => s.scenes.some(c => c.id === scene)) || {}).id,
+                 clips: P_ ? shuffle(P_.variants[variant].clips, r) : [], attention: (st.plan.screens[j] || {}).attention ?? null }; })
+        .filter(s => s.clips.length);
+    }
+  }
+  const byPage = {};
+  for (const m of P) if (m.kind === "screen" && m.record && Number.isInteger(m.record.page)) byPage[m.record.page] = m.record;
+  let i = 0; while (byPage[i] && i < st.plan.screens.length) i++;
+  for (let j = 0; j < i; j++) {                // keep the clip order they rated with
+    if (byPage[j].positions) {                 // (Nov 15) minus clips no longer in the study; their scores stay in the saved rows
+      const kept = Object.keys(byPage[j].positions).sort().map(L => byPage[j].positions[L]).filter(inStudy);
+      if (kept.length) st.plan.screens[j].clips = kept;
+    }
+  }
+  st.answers = [...Array(i).keys()].map(j => byPage[j]);
+  st.practice = prac ? prac.record : null;
+  st.about = start.about || { name };
+  st.t_consent = Date.parse(start.sent_at) || now();
+  st.started = true;
+  st.nmsg = P.length;
+  if (fin || i >= st.plan.screens.length) { st.code = (fin && fin.code) || randId(8); st.page = "done"; st.i = st.plan.screens.length; }
+  else if (i > 0 || prac) { st.page = "screen"; st.i = i; }
+  else { st.page = "screen"; st.i = 0; }
+  st.restored_from_server = rows.length;
+  return st;
+}
+function pageLogin() {
+  let name = "";
+  const msg = h("p", { class: "note" });
+  const go = h("button", { class: "primary", disabled: true, onclick: async () => {
+    const nm = name.trim().replace(/\s+/g, " ");
+    if (nm.length < 2) return;
+    go.disabled = true; msg.textContent = "One moment…";
+    const pid = pidFor(nm);
+    let st = loadFor(pid);
+    let back = !!(st && st.study === STUDY.study && st.page !== "left" && st.page !== "consent");
+    if (!(st && st.study === STUDY.study && st.page !== "left")) {
+      const rows = await fetchProgress(pid);
+      st = rows.length ? stateFromRows(pid, nm, rows) : null;
+      back = !!st;
+    }
+    S = st || newState(pid, nm);
+    S.sess = randId(6);
+    S.welcome = back;
+    if (!S.started) {                            // a new participant: start right away (the welcome page explained everything)
+      S.started = true; S.t_consent = now(); S.page = "screen"; S.i = S.i || 0;
+      send("start", { about: S.about, screen_px: [screen.width, screen.height], window_px: [innerWidth, innerHeight], ua: navigator.userAgent,
+                      plan: S.plan.screens.map(s => s.scene + ":" + s.pair + ":" + s.variant) });
+    }
+    save(); flush(); render();
+  } }, "Continue");
+  const inp = h("input", { type: "text", maxlength: "80", autocomplete: "name", "aria-label": "Your name", oninput: e => { name = e.target.value; go.disabled = name.trim().length < 2; } });
+  inp.addEventListener("keydown", e => { if (e.key === "Enter" && !go.disabled) go.click(); });
+  const [lo, hi] = pageRange();
+  const item = (title, text) => h("div", { class: "witem" }, h("div", { class: "wt" }, title), h("ul", {}, h("li", {}, text)));
+  app.append(h("div", { class: "card welcome" },
+    h("h1", {}, "Driving Video Editing Evaluation Study"),
+    h("h2", {}, "Study overview"),
+    h("p", {}, "This study evaluates AI methods that edit driving videos recorded from a car (the camera car). On each page you watch the original video " +
+      "and three edited videos, then answer four Yes / No questions about each edited video."),
+    h("div", { class: "wcols" },
+      h("div", {},
+        h("h3", {}, "What each page shows"),
+        item("Scenario", "The intent of the edit: the driving event the AI was asked to add to the original video (who appears, what they do, " +
+          "and where, compared with the camera car). Example: “A child unexpectedly moves into the road close in front of the camera car.”"),
+        item("Control", "The specific way the scenario should play out on this page. The same scenario comes in different versions: e.g. the child " +
+          "runs out from behind a parked school bus on one page, and from behind parked cars on another."),
+        item("Videos", "The original recording, for comparison, and three edited videos, Clip A to Clip C. They play and repeat on their own. You rate only the edited clips.")),
+      h("div", {},
+        h("h3", {}, "Evaluation criteria"),
+        item("1. Scenario", "Is this scenario happening? Does the clip show what the edit was meant to do? For example, if it says " +
+          "“a child unexpectedly moves into the road close in front of the camera car”, does a child actually step into the road just ahead of the car?"),
+        item("2. Control", "Is this control happening? Does the clip show the specific version written under Control? For example, if it says " +
+          "“from behind a parked school bus”, is there a school bus, and does the child come out from behind it?"),
+        item("3. Safety-critical", "Could the camera car hit someone if it did not brake or steer? A person stepping into the car's lane just ahead " +
+          "is safety-critical; people on the sidewalk are not."),
+        item("4. Realism", "Could this video be a real recording? People and objects should look real and move naturally (no sliding, floating " +
+          "or flickering)."))),
+    h("div", { class: "wdetails" }, `Study details: ${lo === hi ? lo : lo + "–" + hi} pages per participant; progress saves automatically by name and can be resumed.`),
+    h("div", { class: "field" }, h("div", { class: "q" }, "Enter your name to begin:"), inp),
+    h("div", { class: "step" }, go), msg));
+  setTimeout(() => inp.focus(), 50);
+}
+
+function pageIntro() {
+  const n = S.plan.screens.length;
+  app.append(h("div", { class: "card" },
+    h("h2", {}, "How it works"),
+    h("p", {}, `You will see ${n} pages. On each page, answer Yes or No for every clip A–C on four questions.`),
+    h("ul", { class: "tips" },
+      h("li", {}, h("b", {}, "Original recording: "), "the unedited video, for comparison. Clips A–C are edited versions of it, in a random order. Only the clips are rated."),
+      h("li", {}, h("b", {}, "Is this scenario happening? "), "Does the clip show the scenario written at the top (the people or objects it names, doing what it says)?"),
+      h("li", {}, h("b", {}, "Is this control happening? "), "Does the clip show the specific version written under Control (for example where the person comes from, or what they do)?"),
+      h("li", {}, h("b", {}, "Is it safety-critical? "), "Is someone close enough to the camera car's path that the car could hit them if it did not slow down or steer?"),
+      h("li", {}, h("b", {}, "Does it look like a real scenario? "), "Could this clip be real footage from a car's camera, with people and vehicles that look real and move the way they would in real traffic (speed, direction, timing, body movement)?"),
+      h("li", {}, "Rate what you actually see. The camera car may drive a little differently from the original; that alone does not matter."),
+      h("li", {}, "Click a video to pause or play it. Your answers are saved after every page; if you stop, sign in again with the same name to continue.")),
+    h("div", { class: "step" }, h("button", { class: "primary", onclick: () => {
+      if (!S.started) {                          // the first time only: the start row (name, screen, the pages drawn)
+        S.started = true; S.t_consent = now();
+        send("start", { about: S.about, screen_px: [screen.width, screen.height], window_px: [innerWidth, innerHeight], ua: navigator.userAgent,
+                        plan: S.plan.screens.map(s => s.scene + ":" + s.pair + ":" + s.variant) });
+      }
+      S.page = "screen"; save(); render(); } }, "Start"))));
+}
+
+function pageBreak() {
+  app.append(h("div", { class: "card" }, h("h2", {}, "Time for a short break"),
+    h("p", {}, `You have done ${S.i} of ${S.plan.screens.length} pages. Take a break if you like: your answers so far are saved.`),
+    h("button", { class: "primary", onclick: () => { S.page = "screen"; save(); render(); } }, "Continue")));
+}
+
+function pageDone() {
+  const blob = JSON.stringify({ study: CFG.studyId, pid: S.pid, list: S.list, about: S.about, answers: S.answers }, null, 1);
+  app.append(h("div", { class: "card" }, h("h2", {}, "Thank you!"),
+    h("p", {}, "You have finished. Your completion code is:"), h("div", { class: "code" }, S.code),
+    h("p", { id: "sendState", class: "muted" }),
+    h("div", { class: "row" },
+      h("button", { onclick: () => { const a = h("a", { href: URL.createObjectURL(new Blob([blob], { type: "application/json" })), download: `answers_${S.pid}.json` }); document.body.append(a); a.click(); a.remove(); } }, "Download my answers"),
+      h("button", { id: "sendRetry", hidden: true, onclick: retryNow }, "Try sending again"))));
+  showSendState();
+}
+function showSendState() {
+  const ls = document.getElementById("leaveState");
+  if (ls) ls.textContent = DB && S.outbox.length ? "Please keep this page open for a moment while we record your choice." : "You can close this page.";
+  const el = document.getElementById("sendState"), retry = document.getElementById("sendRetry");
+  if (!el) return;
+  const pending = S.outbox.length, failed = !DB || (pending && sendFailed);
+  el.className = failed ? "warn" : "muted";
+  el.textContent = !DB ? "Your answers could not be sent automatically. Please download them below and send the file to the person who invited you."
+    : failed ? "Your answers could not all be sent yet; we keep trying while this page is open. If this message stays, please download " +
+               "your answers below and send the file to the person who invited you."
+    : pending ? "Sending your answers… please keep this page open for a moment." : "Your answers have been sent. You can close this page.";
+  retry.hidden = !(DB && pending && sendFailed);
+}
+
+// ---------- one study page (layout of the sketch): scenario | control, the five videos in one row, scenario | control again,
+// then the questions in the first column and each clip's Yes / No right under that clip; compact instructions at the bottom ----------
+function pageScreen(sc, idx) {
+  const pair = STUDY.pairs[sc.pair];
+  const scen = scenarioOf(sc);
+  const control = pair.variants[sc.variant].control;
+  const clips = sc.clips.filter(c => c !== pair.original);
+  const letters = clips.map((_, k) => LETTERS[k]);
+  const byLetter = Object.fromEntries(clips.map((c, k) => [LETTERS[k], c]));
+  const A = { t0: now(), r: Object.fromEntries(QKEYS.map(k => [k, {}])), attention: null, first_answer_ms: null, plays: {}, ended: {} };
+  const total = S.plan.screens.length;
+
+  app.append(h("div", { class: "topbar" },
+    h("div", { class: "muted" }, `Page ${idx + 1} of ${total}`),
+    h("div", { class: "progress" }, h("div", { style: `width:${Math.round(100 * idx / total)}%` }))));
+  const heads = () => h("div", { class: "sc-row" },
+    h("div", { class: "sc-box" }, h("div", { class: "sc-label" }, "Scenario"), h("div", {}, scen.line || "")),
+    h("div", { class: "sc-box ctl" }, h("div", { class: "sc-label" }, "Control"), h("div", {}, control)));
+
+  // the videos in one row: the original (the only tagged one) and clips A-C, playing and repeating on their own
+  const vids = [];
+  const cell = (id, key, title, isOrig) => {
+    const v = h("video", { src: clipUrl(id), muted: true, playsinline: true, loop: true, autoplay: true, preload: "auto", "aria-label": title,
+      title: "Click to pause or play", onclick: () => { if (v.paused) v.play().catch(() => {}); else v.pause(); } });   // no player controls
+    v.muted = true; v.loop = true; v.autoplay = true;          // (Nov 15) every video plays on its own and repeats
+    v.addEventListener("play", () => { A.plays[key] = (A.plays[key] || 0) + 1; });
+    v.addEventListener("ended", () => { A.ended[key] = true; });
+    vids.push(v);
+    return h("div", { class: "vcell" + (isOrig ? " orig" : "") }, v,
+      h("div", { class: "vhead" }, isOrig ? h("span", { class: "tag" }, title) : h("span", { class: "letter" }, title),
+        null));
+  };
+  const board = h("div", { class: "board" });
+  const vrow = h("div", { class: "cols vrow" }, cell(pair.original, "orig", "Original recording", true),
+    clips.map((id, k) => cell(id, LETTERS[k], "Clip " + LETTERS[k], false)));
+  board.append(heads(), h("div", { class: "row tools" },
+    h("button", { type: "button", class: "small", onclick: () => vids.forEach(v => { v.currentTime = 0; v.play().catch(() => {}); }) }, "▶ Play all from the start"),
+    h("button", { type: "button", class: "small", onclick: () => vids.forEach(v => v.play().catch(() => {})) }, "▶ Play all"),
+    h("button", { type: "button", class: "small", onclick: () => vids.forEach(v => v.pause()) }, "❚❚ Pause all")), vrow, heads());
+
+  // the questions: first column = the question, then Yes / No under each clip
+  const qgrid = h("div", { class: "cols qgrid" });
+  const left = h("span", { class: "note" });
+  // Next works even with answers left (they can come back to them); Previous goes back one page, answers kept
+  const btn = h("button", { class: "primary", onclick: () => finish(+1) }, idx + 1 < total ? "Next page →" : "Finish");
+  const back = idx > 0 ? h("button", { type: "button", onclick: () => finish(-1) }, "← Previous page") : null;
+  function upd() {
+    let miss = 0;
+    for (const q of QKEYS) for (const L of letters) if (A.r[q][L] == null) miss++;
+    const attnMiss = sc.attention != null && A.attention == null;
+    const n = miss + (attnMiss ? 1 : 0);
+    left.textContent = n ? `${n} answer${n === 1 ? "" : "s"} not given on this page yet (you can go on and come back later)` : "All answered.";
+    if (idx + 1 >= total) {
+      const other = S.answers.reduce((a, r, j) => a + (j === idx || !r ? 0 : missingIn(r)), 0) + S.plan.screens.slice(0, idx).reduce((a, s, j) => a + (S.answers[j] ? 0 : QKEYS.length * s.clips.length), 0);
+      if (other) left.textContent += ` · ${other} answer${other === 1 ? "" : "s"} still empty on earlier pages (use Previous page to fill them)`;
+    }
+  }
+  const scale = (name, label, onpick) => h("div", { class: "scale yn", role: "radiogroup", "aria-label": label },
+    ...[[1, "Yes"], [0, "No"]].map(([n, word]) => h("label", {}, h("input", { type: "radio", name, value: n, "aria-label": label + ": " + word, onchange: () => {
+      if (A.first_answer_ms == null) A.first_answer_ms = now() - A.t0; onpick(n); upd(); } }), word)));
+  qgrid.append(h("div", { class: "qhead" }, "Yes or No for each clip"), ...letters.map(L => h("div", { class: "qhead c" }, "Clip " + L)));
+  const rows = QS.map(([k, text]) => [k, text]);
+  if (sc.attention != null) rows.splice(1 + (hash(S.pid + "|" + idx) % QS.length), 0, ["__attn", `Attention check: please choose ${sc.attention} for every clip in this row.`]);
+  for (const [k, text] of rows) {
+    qgrid.append(h("div", { class: "qtext" + (k === "__attn" ? " attn" : "") }, text));
+    for (const L of letters) qgrid.append(h("div", { class: "qcell" }, scale(`${k}_${L}`, `${text} Clip ${L}`, n => {
+      if (k === "__attn") { A.attnv = A.attnv || {}; A.attnv[L] = n; A.attention = letters.every(x => A.attnv[x] != null) ? (letters.every(x => A.attnv[x] === sc.attention) ? sc.attention : -1) : null; }
+      else A.r[k][L] = n; })));
+  }
+  board.append(qgrid, h("div", { class: "row nextrow" }, back, btn, left));
+  app.append(board);
+  vids.forEach(v => { v.currentTime = 0; v.play().catch(() => {}); });   // start together, then each repeats
+
+  // at the bottom of every page: the full instructions for each question, always visible (no dropdown)
+  app.append(h("div", { class: "card instr" },
+    rubricGrid("bottom")));
+  // a page visited before: show the answers given then (and keep them)
+  const prev = S.answers[idx];
+  if (prev && prev.ratings) {
+    const yn = prev.scale === "yesno";
+    for (const L of letters) {
+      const r0 = prev.ratings[byLetter[L]] || {};     // by clip (the saved ratings are keyed by clip), so moved letters keep their scores
+      const r = Object.fromEntries(QKEYS.map(q => [q, yn ? r0[q] : YESNO_FROM_0_5(r0[q])]));   // an old 0-5 page: shown as Yes / No
+      for (const q of QKEYS) if (r[q] != null) { A.r[q][L] = r[q]; const el = qgrid.querySelector(`input[name="${q}_${L}"][value="${r[q]}"]`); if (el) el.checked = true; }
+    }
+    if (prev.attention_given && sc.attention != null) {
+      A.attnv = Object.assign({}, prev.attention_given);
+      for (const L of letters) { const n = A.attnv[L]; const el = n != null && qgrid.querySelector(`input[name="__attn_${L}"][value="${n}"]`); if (el) el.checked = true; }
+      A.attention = letters.every(x => A.attnv[x] != null) ? (letters.every(x => A.attnv[x] === sc.attention) ? sc.attention : -1) : null;
+    }
+    A.first_answer_ms = prev.first_answer_ms; A.ms_before = (prev.ms || 0);
+  }
+  upd();
+
+  function finish(step) {
+    vids.forEach(v => v.pause());
+    const per = {};
+    for (const L of letters) { per[byLetter[L]] = { letter: L }; for (const q of QKEYS) per[byLetter[L]][q] = A.r[q][L]; }
+    const rec = { page: idx, scenario: sc.scenario, scene: sc.scene, pair: sc.pair, variant: sc.variant, original: pair.original,
+      positions: byLetter, ratings: per, scale: "yesno", attention_asked: sc.attention, attention_given: A.attnv || null,
+      attention_ok: sc.attention != null ? A.attention === sc.attention : null,
+      plays: A.plays, ended: A.ended, ms: (A.ms_before || 0) + now() - A.t0, first_answer_ms: A.first_answer_ms,
+      missing: 0 };
+    rec.missing = missingIn(rec);
+    S.answers[idx] = rec; send("screen", { record: rec });     // the latest row for a page is the one that counts
+    if (step < 0) { S.i = Math.max(0, idx - 1); save(); render(); return; }
+    S.i = idx + 1;
+    if (S.i >= S.plan.screens.length) {
+      S.code = S.code || randId(8);
+      send("finish", { code: S.code, total_ms: now() - S.t_consent, attention_ok: S.answers.filter(r => r && r.attention_ok !== null).map(r => r.attention_ok), about: S.about, answers: S.answers.filter(Boolean),
+        missing_answers: S.plan.screens.reduce((a, s, j) => a + (S.answers[j] ? missingIn(S.answers[j]) : QKEYS.length * s.clips.length), 0) });
+      S.page = "done";
+    } else if (S.plan.screens.length >= 10 && S.i % 10 === 0 && !(S.breaks || []).includes(S.i)) { S.breaks = (S.breaks || []).concat(S.i); S.page = "break"; }
+    save(); render();
+  }
+}
+
+function openModal(id) {
+  const m = document.getElementById("modal"), v = document.getElementById("modalVideo");
+  v.src = clipUrl(id); v.muted = true; m.hidden = false; v.play().catch(() => {});
+}
+{ const mp = playBtn(document.getElementById("modalVideo")); mp.id = "modalPlay"; document.getElementById("modal").append(mp); }
+document.getElementById("modalClose").addEventListener("click", () => { const m = document.getElementById("modal"); const v = document.getElementById("modalVideo"); v.pause(); v.removeAttribute("src"); v.load(); m.hidden = true; });
+
+// ---------- start ----------
+(async function main() {
+  try { STUDY = await (await fetch("study.json", { cache: "no-store" })).json(); }
+  catch (e) { app.replaceChildren(h("div", { class: "card" }, h("p", { class: "warn" }, "The study could not be loaded. Please try again later."))); return; }
+  let last = null;
+  try { last = localStorage.getItem(LASTKEY); } catch (e) {}
+  const st = last ? loadFor(last) : null;
+  if (st && st.study === STUDY.study && st.page !== "left") {
+    // (Nov 15) a draw saved in this browser before clips were removed: drop clips the study no longer has
+    // (Nov 19) the fourth clip is back: a page not answered yet gets every clip of its request (at a random place); answered pages stay as rated
+    ((st.plan || {}).screens || []).forEach((s, j) => { const k = (s.clips || []).filter(inStudy); if (k.length) s.clips = k;
+      const V_ = (STUDY.pairs[s.pair] || { variants: {} }).variants[s.variant];
+      if (V_ && !(st.answers || [])[j]) for (const c of V_.clips) if (!s.clips.includes(c)) s.clips.splice(Math.floor(Math.random() * (s.clips.length + 1)), 0, c); });
+    S = st; S.sess = randId(6); save(); flush(); render();
+  }
+  else { S = { page: "login", outbox: [] }; render(); }
+})();
+</script>
+</body>
+</html>
